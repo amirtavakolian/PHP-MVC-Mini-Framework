@@ -1,0 +1,17 @@
+{
+    "name": "reza/mvc",
+    "type": "project",
+    "authors": [{
+        "name": "amir reza tavakolian",
+        "email": "rezatva@gmail.com"
+    }],
+    "require": {},
+
+    "autoload": {
+        "psr-4": {
+            "App\\": "App/",
+            "Utilities\\": "Utilities/"
+
+        }
+    }
+}
