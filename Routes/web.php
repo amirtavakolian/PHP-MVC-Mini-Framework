@@ -3,9 +3,9 @@
 $routesTable = [
 
     "" => [
-        "method" => "get",
+        "method" => "post|get",
         "target" => "homeController@index",
-        "middleware" => "ieBlocker"
+        "middleware" => "chinaBlocker"
     ],
 
     "login/admin" => [
