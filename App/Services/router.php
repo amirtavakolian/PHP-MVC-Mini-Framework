@@ -2,18 +2,22 @@
 
 namespace App\Services;
 
-use Utilities\View\viewUtilitie;
 use \App\middleware\ieBlocker;
+use Utilities\View\viewUtilitie;
+use Utilities\Router\routerUtilities;
 
 class router
 {
 
+    // Routes table array:
     private $table;
+
+    // Users's request object:
     private $request;
 
-    public function __construct(array $routesTable, $request)
+    public function __construct($request)
     {
-        $this->table = $routesTable;
+        $this->getRoutesTable();
         $this->request = $request;
     }
 
@@ -22,28 +26,25 @@ class router
 
         // Check if route is exist or not:
         if (!$this->routeExist()) {
-            die(require viewUtilitie::loadView("errors.404"));
-
+            die(viewUtilitie::loadView("errors.404"));
         }
 
         // Check method of the request:
         if (!$this->request->checkMethod($this->table[$this->request->uri])) {
             die(require viewUtilitie::loadView("errors.405"));
-
         }
 
         // Check middleware existed or not:
-        if ($this->middlewareExist($this->table[$this->request->uri])) {
+        if ($this->middlewareExist()) {
             $middleware = $this->getMiddlewares();
-            
-            
+
             foreach ($middleware as $runMiddleware) {
                 $middlewareClass = MIDDLEWARE_NAMESPACE . $runMiddleware;
-                if(!class_exists($middlewareClass)){
-                    if(DEV_MODE){
+                if (!class_exists($middlewareClass)) {
+                    if (DEV_MODE) {
                         die("Middleware class not existed");
-                    }else{
-                        die("Sorry, error happend <br> We will fix it after 10 min");                
+                    } else {
+                        die("Sorry, error happend <br> We will fix it after 10 min");
                     }
                 }
                 $midd = new $middlewareClass();
@@ -65,12 +66,12 @@ class router
         }
 
         if (!class_exists($controller)) {
-            die("Class not existed");        
+            die("Class not existed");
         }
 
         $controllerObj = new $controller();
 
-        if(!method_exists($controllerObj, $action)){
+        if (!method_exists($controllerObj, $action)) {
             die("Method not found");
         }
 
@@ -80,23 +81,31 @@ class router
 
     // ----------- METHODS --------------- //
 
+    private function getRoutesTable()
+    {
+        include routerUtilities::getRouteTable();
+        $this->table = $routesTable;
+    }
+    
     private function routeExist()
     {
         return array_key_exists($this->request->uri, $this->table);
     }
 
     // check if middleware existed or not 
-    private function middlewareExist($route)
+    private function middlewareExist()
     {
-        return array_key_exists("middleware", $route);
+        return array_key_exists("middleware", $this->table[$this->request->uri]);
     }
 
     private function getMiddlewares()
     {
-        $midds = explode("|", $this->table[$this->request->uri]["middleware"]);
-        $midds[] = IE_BLOCKER;
-
-        return $midds;
+        if (!empty($this->table[$this->request->uri]["middleware"])) {
+            $midds = explode("|", $this->table[$this->request->uri]["middleware"]);
+            $midds[] = IE_BLOCKER;
+            return $midds;
+        }
+        die("Middleware is empty bro :D ");
     }
 
     private function controllerExist()
